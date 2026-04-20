@@ -131,17 +131,41 @@ def choose_move(board: List[List[int]], turn: int, config: Dict) -> Tuple[int, D
 def evaluate(board: List[List[int]], player: int) -> int:
     opponent = other(player)
 
-    if terminal(board)[0]:
-        w = winner(board)
-        if w == player:
-            return 1000
-        elif w == opponent:
-            return -1000
-        else:
-            return 0
-    
-    return 0
-        
+    score = 0
+
+    for r in range(ROWS):
+        for c in range(COLS - 3):
+            line = [board[r][c+i] for i in range(4)]
+            if line.count(player) == 3:
+                score += 1
+            elif line.count(opponent) == 3:
+                score -= 1
+                
+    for c in range(COLS):
+        for r in range(ROWS - 3):
+            line = [board[r+i][c] for i in range(4)]
+            if line.count(player) == 3:
+                score += 1
+            elif line.count(opponent) == 3:
+                score -= 1
+
+    for r in range(ROWS - 3):
+        for c in range(COLS - 3):
+            line = [board[r+i][c+i] for i in range(4)]
+            if line.count(player) == 3:
+                score += 1
+            elif line.count(opponent) == 3:
+                score -= 1
+
+    for r in range(ROWS - 3):
+        for c in range(3, COLS):
+            line = [board[r+i][c-i] for i in range(4)]
+            if line.count(player) == 3:
+                score += 1
+            elif line.count(opponent) == 3:
+                score -= 1
+
+    return score
 
 def min_max(max_turn: bool = False, player: int = 1, turn: int = 1, board: List[List[int]] = None, legal: List[int] = None, time_check=None, max_depth: int = 1) -> Tuple[int, int]:
 
