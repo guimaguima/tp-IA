@@ -1,3 +1,4 @@
+from shutil import move
 from typing import List, Tuple, Optional, Dict
 import time
 import math
@@ -99,16 +100,89 @@ def choose_move(board: List[List[int]], turn: int, config: Dict) -> Tuple[int, D
     
     legal = valid_moves(board)
 
-    move = 0
+    best_move = 0
     if not legal:
         # Sem jogadas: devolve 0 por convenção (servidor lida com isso)
-        return move
+        return best_move
     
-    # VERSÃO INICIAL: escolhe aleatoriamente entre as jogadas legais
-    move = random.choice(legal)
+    best_move = legal[0]
+    
+    for depth in range(1, max_depth + 1):
+        if time_exceeded():
+            break
+            
+        _, move = min_max(
+            max_turn=True, 
+            player=turn, 
+            turn=turn, 
+            board=board, 
+            legal=legal, 
+            time_check=time_exceeded,
+            max_depth=depth
+        )
+        
+        # Só atualiza a melhor jogada se a busca terminou ANTES do tempo acabar
+        if not time_exceeded() and move in legal:
+            best_move = move
+            
+    return best_move
 
-    return move
 
+def evaluate(board: List[List[int]], player: int) -> int:
+    opponent = other(player)
+
+    if terminal(board)[0]:
+        w = winner(board)
+        if w == player:
+            return 1000
+        elif w == opponent:
+            return -1000
+        else:
+            return 0
+    
+    return 0
+        
+
+def min_max(max_turn: bool = False, player: int = 1, turn: int = 1, board: List[List[int]] = None, legal: List[int] = None, time_check=None, max_depth: int = 1) -> Tuple[int, int]:
+
+    if time_check():
+        return evaluate(board, player), (legal[0] if legal else 0)
+
+    if terminal(board)[0] or (max_depth == 0):
+        return evaluate(board, player), 0
+
+    best_move = legal[0] if legal else 0
+    best_score = -math.inf if max_turn else math.inf
+    
+    for col in legal:
+        new_board = make_move(board, col, turn)
+        
+        if new_board is None:
+            continue
+            
+        score, _ = min_max(
+            max_turn=not max_turn, 
+            player=player, 
+            turn=other(turn), 
+            board=new_board, 
+            legal=valid_moves(new_board),
+            time_check=time_check,
+            max_depth=(max_depth - 1)
+        )
+                
+        if max_turn:
+            if score > best_score:
+                best_score = score
+                best_move = col
+        else:
+            if score < best_score:
+                best_score = score   
+                best_move = col
+    
+    return best_score, best_move
+    
+                
+        
 def choose_move_randomly(board: List[List[int]], turn: int, config: Dict) -> Tuple[int, Dict]:
     max_time_ms = int(config.get("max_time_ms"))
     max_depth = int(config.get("max_depth"))
