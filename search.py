@@ -105,7 +105,9 @@ def choose_move(board: List[List[int]], turn: int, config: Dict) -> Tuple[int, D
         # Sem jogadas: devolve 0 por convenção (servidor lida com isso)
         return best_move
     
-    best_move = legal[0]
+    prefered_order = [3, 2, 4] in legal and [3, 2, 4] or legal
+    
+    best_move = random.choice(prefered_order)  # Inicializa com uma jogada aleatória válida
     
     for depth in range(1, max_depth + 1):
         if time_exceeded():
@@ -133,37 +135,14 @@ def evaluate(board: List[List[int]], player: int) -> int:
 
     score = 0
 
-    for r in range(ROWS):
-        for c in range(COLS - 3):
-            line = [board[r][c+i] for i in range(4)]
-            if line.count(player) == 3:
-                score += 1
-            elif line.count(opponent) == 3:
-                score -= 1
-                
-    for c in range(COLS):
-        for r in range(ROWS - 3):
-            line = [board[r+i][c] for i in range(4)]
-            if line.count(player) == 3:
-                score += 1
-            elif line.count(opponent) == 3:
-                score -= 1
-
-    for r in range(ROWS - 3):
-        for c in range(COLS - 3):
-            line = [board[r+i][c+i] for i in range(4)]
-            if line.count(player) == 3:
-                score += 1
-            elif line.count(opponent) == 3:
-                score -= 1
-
-    for r in range(ROWS - 3):
-        for c in range(3, COLS):
-            line = [board[r+i][c-i] for i in range(4)]
-            if line.count(player) == 3:
-                score += 1
-            elif line.count(opponent) == 3:
-                score -= 1
+    if terminal(board)[0]:
+        w = terminal(board)[1]
+        if w == player:
+            return 1000
+        elif w == opponent:
+            return -1000
+        else:
+            return 0
 
     return score
 
