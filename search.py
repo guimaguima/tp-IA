@@ -109,11 +109,47 @@ def choose_move(board: List[List[int]], turn: int, config: Dict) -> Tuple[int, D
     
     best_move = random.choice(prefered_order)  # Inicializa com uma jogada aleatória válida
     
+    # min-max padrão
+    # _, move = min_max(
+    #     max_turn=True, 
+    #     player=turn, 
+    #     turn=turn, 
+    #     board=board, 
+    #     legal=legal, 
+    #     time_check=time_exceeded,
+    #     max_depth=max_depth
+    # )
+    
+    # alpha-beta padrão
+    # _, move = alpha_beta(
+    #     max_turn=True, 
+    #     player=turn, 
+    #     turn=turn, 
+    #     board=board, 
+    #     legal=legal, 
+    #     time_check=time_exceeded,
+    #     max_depth=max_depth
+    # )
+    
+    #interactive deepening
     for depth in range(1, max_depth + 1):
         if time_exceeded():
+            print("Time exceeded before starting depth", depth)
             break
-            
-        _, move = min_max(
+        
+        #com min-max
+        # _, move = min_max(
+        #     max_turn=True, 
+        #     player=turn, 
+        #     turn=turn, 
+        #     board=board, 
+        #     legal=legal, 
+        #     time_check=time_exceeded,
+        #     max_depth=depth
+        # )
+        
+        #com alpha-beta
+        _, move = alpha_beta(
             max_turn=True, 
             player=turn, 
             turn=turn, 
@@ -132,17 +168,32 @@ def choose_move(board: List[List[int]], turn: int, config: Dict) -> Tuple[int, D
 
 def evaluate(board: List[List[int]], player: int) -> int:
     opponent = other(player)
-
     score = 0
 
-    if terminal(board)[0]:
-        w = terminal(board)[1]
+    is_term, w = terminal(board)
+    if is_term:
         if w == player:
-            return 1000
+            return 1000000 
         elif w == opponent:
-            return -1000
+            return -1000000
         else:
             return 0
+
+    EVAL_MATRIX = [
+        [3, 4, 5,  7,  5, 4, 3],
+        [4, 6, 8, 10,  8, 6, 4],
+        [5, 8, 11, 13, 11, 8, 5],
+        [5, 8, 11, 13, 11, 8, 5],
+        [4, 6, 8, 10,  8, 6, 4],
+        [3, 4, 5,  7,  5, 4, 3]
+    ]
+
+    for r in range(ROWS):
+        for c in range(COLS):
+            if board[r][c] == player:
+                score += EVAL_MATRIX[r][c]
+            elif board[r][c] == opponent:
+                score -= EVAL_MATRIX[r][c]
 
     return score
 
@@ -182,6 +233,57 @@ def min_max(max_turn: bool = False, player: int = 1, turn: int = 1, board: List[
                 best_score = score   
                 best_move = col
     
+    return best_score, best_move
+
+def alpha_beta(max_turn: bool = False, player: int = 1, turn: int = 1, board: List[List[int]] = None, legal: List[int] = None, time_check=None, max_depth: int = 1, alpha: float = -math.inf, beta: float = math.inf) -> Tuple[int, int]:
+    if time_check():
+        return evaluate(board, player), (legal[0] if legal else 0)
+
+    if terminal(board)[0] or (max_depth == 0):
+        return evaluate(board, player), 0
+
+    best_move = legal[0] if legal else 0
+    best_score = -math.inf if max_turn else math.inf
+    
+    for col in legal:
+        new_board = make_move(board, col, turn)
+        
+        if new_board is None:
+            continue
+            
+        score, _ = alpha_beta(
+            max_turn=not max_turn, 
+            player=player, 
+            turn=other(turn), 
+            board=new_board, 
+            legal=valid_moves(new_board),
+            time_check=time_check,
+            max_depth=(max_depth - 1),
+            alpha=alpha,
+            beta=beta
+        )
+            
+            
+        if max_turn:
+            if score > best_score:
+                best_score = score
+                best_move = col
+            
+            alpha = max(alpha, best_score)
+            
+            if best_score >= beta:
+                break 
+                
+        else:
+            if score < best_score:
+                best_score = score   
+                best_move = col
+            
+            beta = min(beta, best_score)
+            
+            if best_score <= alpha:
+                break
+        
     return best_score, best_move
     
                 
