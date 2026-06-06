@@ -3,7 +3,7 @@ import time
 from multiprocessing import Process, Queue, get_context
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
-import search  
+import TP1.search as search  
 
 app = Flask(__name__)
 CORS(app)
