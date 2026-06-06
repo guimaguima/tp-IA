@@ -31,8 +31,8 @@ def main():
     print("=== Trabalho Prático II: Aprendizado de Máquina ===\nFeito por Gabriel Guimarães e João Pedro Smolinski\n")
 
     try:
-        df_train = pd.read_csv("TP2/data/nba_treino.csv")
-        df_test = pd.read_csv("TP2/data/nba_teste.csv")
+        df_train = pd.read_csv("data/nba_treino.csv")
+        df_test = pd.read_csv("data/nba_teste.csv")
     except FileNotFoundError:
         print("Erro: Arquivos CSV não encontados.")
         return
